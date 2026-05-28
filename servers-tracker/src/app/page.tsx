@@ -6,6 +6,7 @@ interface ServerData {
   name: string;
   status: string;
   lastSeen: string;
+  lastseen?: string;
   latestMetric?: {
     cpu: number;
     ram: number;
@@ -33,8 +34,10 @@ export default function Dashboard() {
   }, []);
 
   // Logic to determine if server is offline (no signal for 30 seconds)
-  const isOffline = (lastSeen: string) => {
+  const isOffline = (lastSeen?: string) => {
+    if (!lastSeen) return true;
     const lastSeenDate = new Date(lastSeen).getTime();
+    if (isNaN(lastSeenDate)) return true;
     const now = new Date().getTime();
     return now - lastSeenDate > 30000;
   };
@@ -48,7 +51,7 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {servers.map((server) => {
-            const offline = isOffline(server.lastSeen);
+            const offline = isOffline(server.lastSeen || server.lastseen);
 
             return (
               <div
@@ -97,7 +100,9 @@ export default function Dashboard() {
                     <span>Status: {offline ? "OFFLINE" : "ONLINE"}</span>
                     <span>
                       Last seen:{" "}
-                      {new Date(server.lastSeen).toLocaleTimeString()}
+                      {server.lastSeen || server.lastseen
+                        ? new Date(server.lastSeen || server.lastseen || "").toLocaleTimeString()
+                        : "Never"}
                     </span>
                   </div>
                 </div>
