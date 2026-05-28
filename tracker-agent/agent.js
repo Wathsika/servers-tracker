@@ -4,7 +4,7 @@ const axios = require("axios");
 
 // CONFIGURATION
 const API_URL = "http://localhost:3000/api/metrics"; // Change to your deployed URL later
-const VPS_NAME = "vps-main-prod"; // Unique name for this VPS
+const VPS_NAME = "personal-laptop"; // Unique name for this VPS
 const INTERVAL = 5000; // 5 seconds
 
 async function collectAndSendMetrics() {
