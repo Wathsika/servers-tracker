@@ -1,39 +1,64 @@
-// tracker-agent/agent.js
+require("dotenv").config();
 const si = require("systeminformation");
-const axios = require("axios");
+const mongoose = require("mongoose");
 
-// CONFIGURATION
-const API_URL = "http://localhost:3000/api/metrics"; // Change to your deployed URL later
-const VPS_NAME = "personal-laptop"; // Unique name for this VPS
-const INTERVAL = 5000; // 5 seconds
+// Define the Models inside the agent script
+const Server = mongoose.model(
+  "Server",
+  new mongoose.Schema({
+    name: String,
+    status: String,
+    lastSeen: Date,
+  }),
+);
 
-async function collectAndSendMetrics() {
+const Metric = mongoose.model(
+  "Metric",
+  new mongoose.Schema({
+    serverId: mongoose.Schema.Types.ObjectId,
+    cpu: Number,
+    ram: Number,
+    disk: Number,
+    timestamp: { type: Date, default: Date.now },
+  }),
+);
+
+async function run() {
   try {
-    // Collect metrics using systeminformation
-    const cpu = await si.currentLoad();
-    const mem = await si.mem();
-    const disk = await si.fsSize();
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("Connected to MongoDB Atlas!");
 
-    const payload = {
-      name: VPS_NAME,
-      cpu: parseFloat(cpu.currentLoad.toFixed(1)),
-      ram: parseFloat(((mem.active / mem.total) * 100).toFixed(1)),
-      disk: parseFloat(disk[0].use.toFixed(1)),
-    };
+    setInterval(async () => {
+      try {
+        const cpu = await si.currentLoad();
+        const mem = await si.mem();
+        const disk = await si.fsSize();
 
-    console.log(
-      `[${new Date().toLocaleTimeString()}] Sending metrics...`,
-      payload,
-    );
+        // 1. Update Heartbeat
+        const server = await Server.findOneAndUpdate(
+          { name: process.env.VPS_NAME },
+          { lastSeen: new Date(), status: "online" },
+          { upsert: true, returnDocument: "after" },
+        );
 
-    await axios.post(API_URL, payload);
-  } catch (error) {
-    console.error("Error sending metrics:", error.message);
+        // 2. Save Metrics
+        await Metric.create({
+          serverId: server._id,
+          cpu: parseFloat(cpu.currentLoad.toFixed(1)),
+          ram: parseFloat(((mem.active / mem.total) * 100).toFixed(1)),
+          disk: parseFloat(disk[0].use.toFixed(1)),
+        });
+
+        console.log(
+          `[${new Date().toLocaleTimeString()}] Metrics Synced for ${process.env.VPS_NAME}`,
+        );
+      } catch (err) {
+        console.error("Loop error:", err.message);
+      }
+    }, 10000); // Sends data every 10 seconds
+  } catch (err) {
+    console.error("Connection error:", err.message);
   }
 }
 
-// Start the loop
-console.log(
-  `Agent started for ${VPS_NAME}. Monitoring every ${INTERVAL / 1000}s...`,
-);
-setInterval(collectAndSendMetrics, INTERVAL);
+run();
