@@ -3,126 +3,158 @@ import { useState } from "react";
 import ServerChart from "./ServerChart";
 
 type MetricType = "cpu" | "ram" | "disk";
+type ViewType = "graph" | "services" | "docker";
 
 const metricConfigs = {
-  cpu: { color: "#3b82f6", label: "CPU" },
-  ram: { color: "#a855f7", label: "RAM" },
-  disk: { color: "#10b981", label: "Disk" },
+  cpu: { color: "#3b82f6" },
+  ram: { color: "#a855f7" },
+  disk: { color: "#10b981" },
 };
 
 export default function ServerCard({ server }: { server: any }) {
   const [activeChart, setActiveChart] = useState<MetricType>("cpu");
+  const [activeView, setActiveView] = useState<ViewType>("graph");
+
   const isOffline =
     new Date().getTime() - new Date(server.lastSeen).getTime() > 30000;
 
   return (
-    <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 shadow-xl hover:border-slate-600/50 transition-all">
-      {/* Name and Status */}
+    <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 shadow-xl transition-all">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold text-white tracking-tight">
+        <h3 className="text-lg font-bold text-white italic tracking-tight">
           {server.name}
         </h3>
-        <div
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${isOffline ? "bg-red-500/10 border-red-500/20 text-red-500" : "bg-green-500/10 border-green-500/20 text-green-500"}`}
+        <span
+          className={`text-[9px] font-black px-2 py-0.5 rounded border ${isOffline ? "border-red-500/30 text-red-500" : "border-green-500/30 text-green-500 animate-pulse"}`}
         >
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${isOffline ? "bg-red-500" : "bg-green-500 animate-pulse"}`}
-          />
-          <span className="text-[10px] font-black uppercase tracking-tighter">
-            {isOffline ? "Offline" : "Online"}
-          </span>
-        </div>
-      </div>
-
-      {/* CLICKABLE METRIC BOXES */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        {/* CPU Box */}
-        <button
-          onClick={() => setActiveChart("cpu")}
-          className={`p-3 rounded-xl border transition-all text-center ${
-            activeChart === "cpu"
-              ? "bg-blue-500/10 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-              : "bg-slate-900/40 border-slate-700/30 hover:border-slate-500"
-          }`}
-        >
-          <p
-            className={`text-[9px] font-bold uppercase mb-1 ${activeChart === "cpu" ? "text-blue-400" : "text-slate-500"}`}
-          >
-            CPU
-          </p>
-          <p
-            className={`text-xl font-black ${activeChart === "cpu" ? "text-white" : "text-blue-400"}`}
-          >
-            {isOffline ? "0" : server.latestMetric?.cpu}%
-          </p>
-        </button>
-
-        {/* RAM Box */}
-        <button
-          onClick={() => setActiveChart("ram")}
-          className={`p-3 rounded-xl border transition-all text-center ${
-            activeChart === "ram"
-              ? "bg-purple-500/10 border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.2)]"
-              : "bg-slate-900/40 border-slate-700/30 hover:border-slate-500"
-          }`}
-        >
-          <p
-            className={`text-[9px] font-bold uppercase mb-1 ${activeChart === "ram" ? "text-purple-400" : "text-slate-500"}`}
-          >
-            RAM
-          </p>
-          <p
-            className={`text-xl font-black ${activeChart === "ram" ? "text-white" : "text-purple-400"}`}
-          >
-            {isOffline ? "0" : server.latestMetric?.ram}%
-          </p>
-        </button>
-
-        {/* Disk Box */}
-        <button
-          onClick={() => setActiveChart("disk")}
-          className={`p-3 rounded-xl border transition-all text-center ${
-            activeChart === "disk"
-              ? "bg-emerald-500/10 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-              : "bg-slate-900/40 border-slate-700/30 hover:border-slate-500"
-          }`}
-        >
-          <p
-            className={`text-[9px] font-bold uppercase mb-1 ${activeChart === "disk" ? "text-emerald-400" : "text-slate-500"}`}
-          >
-            Disk
-          </p>
-          <p
-            className={`text-xl font-black ${activeChart === "disk" ? "text-white" : "text-emerald-400"}`}
-          >
-            {isOffline ? "0" : server.latestMetric?.disk}%
-          </p>
-        </button>
-      </div>
-
-      {/* Chart Display */}
-      <div className="flex items-center justify-between px-1">
-        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">
-          Visualizing {activeChart} history
+          {isOffline ? "OFFLINE" : "LIVE"}
         </span>
       </div>
 
-      {!isOffline && server.history?.length > 0 ? (
-        <ServerChart
-          data={server.history}
-          metric={activeChart}
-          color={metricConfigs[activeChart].color}
-        />
-      ) : (
-        <div className="h-40 mt-4 flex items-center justify-center border border-dashed border-slate-700 rounded-xl text-slate-600 text-xs uppercase font-bold tracking-widest">
-          {isOffline ? "Connection Lost" : "No Data"}
-        </div>
-      )}
+      {/* Interactive Metric Boxes */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {(["cpu", "ram", "disk"] as MetricType[]).map((m) => (
+          <button
+            key={m}
+            onClick={() => {
+              setActiveChart(m);
+              setActiveView("graph");
+            }}
+            className={`p-3 rounded-xl border transition-all ${
+              activeChart === m && activeView === "graph"
+                ? "bg-slate-700/50 shadow-lg"
+                : "bg-slate-900/40 border-slate-700/30"
+            }`}
+            style={{
+              borderColor:
+                activeChart === m && activeView === "graph"
+                  ? metricConfigs[m].color
+                  : "",
+            }}
+          >
+            <p
+              className="text-[9px] font-bold uppercase opacity-50 mb-1"
+              style={{ color: activeChart === m ? metricConfigs[m].color : "" }}
+            >
+              {m}
+            </p>
+            <p className="text-xl font-black text-white">
+              {isOffline ? "0" : server.latestMetric?.[m]}%
+            </p>
+          </button>
+        ))}
+      </div>
 
-      {/* Footer Details */}
-      <div className="mt-4 flex justify-between items-center text-[9px] font-mono text-slate-600">
-        <span>IP: {server.ip || ""}</span>
-        <span>SYNC: {new Date(server.lastSeen).toLocaleTimeString()}</span>
+      {/* Tab Switcher */}
+      <div className="flex gap-4 mb-4 border-b border-slate-700/30 pb-2">
+        {(["graph", "services", "docker"] as ViewType[]).map((v) => (
+          <button
+            key={v}
+            onClick={() => setActiveView(v)}
+            className={`text-[10px] font-bold uppercase tracking-widest ${activeView === v ? "text-blue-400" : "text-slate-500"}`}
+          >
+            {v === "graph" ? "History" : v}
+          </button>
+        ))}
+      </div>
+
+      {/* Content Area */}
+      <div className="min-h-[160px]">
+        {activeView === "graph" &&
+          (!isOffline ? (
+            <ServerChart
+              data={server.history}
+              metric={activeChart}
+              color={metricConfigs[activeChart].color}
+            />
+          ) : (
+            <div className="h-40 flex items-center justify-center text-slate-600 text-[10px] font-bold uppercase border border-dashed border-slate-700 rounded-xl">
+              Connection Lost
+            </div>
+          ))}
+
+        {activeView === "services" && (
+          <div className="space-y-1.5 max-h-44 overflow-y-auto custom-scrollbar">
+            {server.services?.length > 0 ? (
+              server.services.map((svc: any) => (
+                <div
+                  key={svc.name}
+                  className="flex justify-between items-center bg-slate-900/40 p-2 rounded-lg border border-slate-700/30"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]" />
+                    <span className="text-[11px] font-bold text-slate-200">
+                      {svc.name}
+                    </span>
+                  </div>
+                  <span className="text-[8px] font-mono text-green-500 uppercase">
+                    Active
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="py-10 text-center text-slate-600 text-[10px]">
+                No 3rd-party apps detected
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeView === "docker" && (
+          <div className="space-y-2 max-h-44 overflow-y-auto custom-scrollbar">
+            {server.containers?.length > 0 ? (
+              server.containers.map((c: any) => (
+                <div
+                  key={c.name}
+                  className="bg-slate-900/40 p-2 rounded-lg border border-slate-700/30"
+                >
+                  <div className="flex justify-between mb-1">
+                    <span className="text-[11px] font-bold text-blue-400 truncate w-32">
+                      {c.name}
+                    </span>
+                    <span className="text-[8px] text-green-500 uppercase font-bold">
+                      {c.state}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[9px] text-slate-500 font-mono">
+                    <span>CPU: {c.cpu}%</span>
+                    <span>MEM: {c.mem}%</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="py-10 text-center text-slate-600 text-[10px]">
+                No containers running
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-slate-700/30 flex justify-between text-[9px] font-mono text-slate-600">
+        <span>IP: {server.ip || "Detecting..."}</span>
+        <span>{new Date(server.lastSeen).toLocaleTimeString()}</span>
       </div>
     </div>
   );
