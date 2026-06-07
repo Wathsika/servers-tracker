@@ -14,10 +14,12 @@ export async function GET() {
         .limit(20)
         .lean();
 
+      const latestMetric = history[0] || { cpu: 0, ram: 0, disk: 0 };
+
       return {
         ...server,
         history: history.reverse() || [], // Ensure it's at least an empty array
-        latestMetric: history[0] || { cpu: 0, ram: 0, disk: 0 },
+        latestMetric,
       };
     }),
   );
