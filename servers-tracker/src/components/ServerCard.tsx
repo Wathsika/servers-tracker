@@ -5,8 +5,15 @@ import ServerChart from "./ServerChart";
 type MetricType = "cpu" | "ram" | "disk";
 type ViewType = "graph" | "services" | "containers" | "storage";
 
-function bytesToGB(bytes: number) {
-  return (bytes / (1024 * 1024 * 1024)).toFixed(1);
+function formatStorage(total: number, used: number, free: number) {
+  // systeminformation returns bytes on most systems, but some return MB
+  // Detect: if total > 10 GB in bytes, it's bytes; otherwise it's MB
+  const divisor = total > 10 * 1024 ** 3 ? 1024 ** 3 : 1024;
+  return {
+    total: (total / divisor).toFixed(1),
+    used: (used / divisor).toFixed(1),
+    free: (free / divisor).toFixed(1),
+  };
 }
 
 const metricConfigs = {
@@ -181,23 +188,28 @@ export default function ServerCard({ server }: { server: any }) {
                     }}
                   />
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-slate-800/60 p-2 rounded-lg">
-                    <p className="text-[8px] text-slate-500 uppercase font-bold">Total</p>
-                    <p className="text-[13px] font-black text-white">{bytesToGB(server.storage.total)}</p>
-                    <p className="text-[8px] text-slate-500">GB</p>
-                  </div>
-                  <div className="bg-slate-800/60 p-2 rounded-lg">
-                    <p className="text-[8px] text-slate-500 uppercase font-bold">Used</p>
-                    <p className="text-[13px] font-black text-yellow-400">{bytesToGB(server.storage.used)}</p>
-                    <p className="text-[8px] text-slate-500">GB</p>
-                  </div>
-                  <div className="bg-slate-800/60 p-2 rounded-lg">
-                    <p className="text-[8px] text-slate-500 uppercase font-bold">Free</p>
-                    <p className="text-[13px] font-black text-green-400">{bytesToGB(server.storage.free)}</p>
-                    <p className="text-[8px] text-slate-500">GB</p>
-                  </div>
-                </div>
+                {(() => {
+                  const f = formatStorage(server.storage.total, server.storage.used, server.storage.free);
+                  return (
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-slate-800/60 p-2 rounded-lg">
+                        <p className="text-[8px] text-slate-500 uppercase font-bold">Total</p>
+                        <p className="text-[13px] font-black text-white">{f.total}</p>
+                        <p className="text-[8px] text-slate-500">GB</p>
+                      </div>
+                      <div className="bg-slate-800/60 p-2 rounded-lg">
+                        <p className="text-[8px] text-slate-500 uppercase font-bold">Used</p>
+                        <p className="text-[13px] font-black text-yellow-400">{f.used}</p>
+                        <p className="text-[8px] text-slate-500">GB</p>
+                      </div>
+                      <div className="bg-slate-800/60 p-2 rounded-lg">
+                        <p className="text-[8px] text-slate-500 uppercase font-bold">Free</p>
+                        <p className="text-[13px] font-black text-green-400">{f.free}</p>
+                        <p className="text-[8px] text-slate-500">GB</p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <div className="py-10 text-center text-slate-600 text-[10px]">
