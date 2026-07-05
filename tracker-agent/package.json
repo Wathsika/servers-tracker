@@ -10,9 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "axios": "^1.16.1",
     "dotenv": "^17.4.2",
-    "mongoose": "^9.6.3",
-    "systeminformation": "^5.31.6"
+    "mongoose": "^9.6.3"
   }
 }
