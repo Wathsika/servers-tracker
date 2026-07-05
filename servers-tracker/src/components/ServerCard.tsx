@@ -3,7 +3,7 @@ import { useState } from "react";
 import ServerChart from "./ServerChart";
 
 type MetricType = "cpu" | "ram" | "disk";
-type ViewType = "graph" | "services" | "docker";
+type ViewType = "graph" | "services" | "containers";
 
 const metricConfigs = {
   cpu: { color: "#3b82f6" },
@@ -68,7 +68,7 @@ export default function ServerCard({ server }: { server: any }) {
 
       {/* Tab Switcher */}
       <div className="flex gap-4 mb-4 border-b border-slate-700/30 pb-2">
-        {(["graph", "services", "docker"] as ViewType[]).map((v) => (
+        {(["graph", "services", "containers"] as ViewType[]).map((v) => (
           <button
             key={v}
             onClick={() => setActiveView(v)}
@@ -121,7 +121,7 @@ export default function ServerCard({ server }: { server: any }) {
           </div>
         )}
 
-        {activeView === "docker" && (
+        {activeView === "containers" && (
           <div className="space-y-2 max-h-44 overflow-y-auto custom-scrollbar">
             {server.containers?.length > 0 ? (
               server.containers.map((c: any) => (
