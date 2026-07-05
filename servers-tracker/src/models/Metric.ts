@@ -5,7 +5,7 @@ const MetricSchema = new Schema({
   cpu: Number,
   ram: Number,
   disk: Number,
-  timestamp: { type: Date, default: Date.now },
+  timestamp: { type: Date, default: Date.now, expires: 3600 },
 });
 
 export default models.Metric || model("Metric", MetricSchema);
