@@ -3,7 +3,11 @@ import { useState } from "react";
 import ServerChart from "./ServerChart";
 
 type MetricType = "cpu" | "ram" | "disk";
-type ViewType = "graph" | "services" | "containers";
+type ViewType = "graph" | "services" | "containers" | "storage";
+
+function bytesToGB(bytes: number) {
+  return (bytes / (1024 * 1024 * 1024)).toFixed(1);
+}
 
 const metricConfigs = {
   cpu: { color: "#3b82f6" },
@@ -68,7 +72,7 @@ export default function ServerCard({ server }: { server: any }) {
 
       {/* Tab Switcher */}
       <div className="flex gap-4 mb-4 border-b border-slate-700/30 pb-2">
-        {(["graph", "services", "containers"] as ViewType[]).map((v) => (
+          {(["graph", "services", "containers", "storage"] as ViewType[]).map((v) => (
           <button
             key={v}
             onClick={() => setActiveView(v)}
@@ -146,6 +150,58 @@ export default function ServerCard({ server }: { server: any }) {
             ) : (
               <div className="py-10 text-center text-slate-600 text-[10px]">
                 No containers running
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeView === "storage" && (
+          <div className="space-y-3">
+            {server.storage ? (
+              <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-700/30">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">
+                    Disk Usage
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-300">
+                    {server.latestMetric?.disk || 0}%
+                  </span>
+                </div>
+                <div className="h-2.5 bg-slate-700/50 rounded-full overflow-hidden mb-3">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${server.latestMetric?.disk || 0}%`,
+                      background:
+                        (server.latestMetric?.disk || 0) > 90
+                          ? "linear-gradient(90deg, #f59e0b, #ef4444)"
+                          : (server.latestMetric?.disk || 0) > 70
+                            ? "linear-gradient(90deg, #3b82f6, #f59e0b)"
+                            : "linear-gradient(90deg, #10b981, #3b82f6)",
+                    }}
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-slate-800/60 p-2 rounded-lg">
+                    <p className="text-[8px] text-slate-500 uppercase font-bold">Total</p>
+                    <p className="text-[13px] font-black text-white">{bytesToGB(server.storage.total)}</p>
+                    <p className="text-[8px] text-slate-500">GB</p>
+                  </div>
+                  <div className="bg-slate-800/60 p-2 rounded-lg">
+                    <p className="text-[8px] text-slate-500 uppercase font-bold">Used</p>
+                    <p className="text-[13px] font-black text-yellow-400">{bytesToGB(server.storage.used)}</p>
+                    <p className="text-[8px] text-slate-500">GB</p>
+                  </div>
+                  <div className="bg-slate-800/60 p-2 rounded-lg">
+                    <p className="text-[8px] text-slate-500 uppercase font-bold">Free</p>
+                    <p className="text-[13px] font-black text-green-400">{bytesToGB(server.storage.free)}</p>
+                    <p className="text-[8px] text-slate-500">GB</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-10 text-center text-slate-600 text-[10px]">
+                No storage data available
               </div>
             )}
           </div>

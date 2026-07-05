@@ -23,6 +23,11 @@ const ServerSchema = new Schema({
       mem: Number,
     },
   ],
+  storage: {
+    total: Number,
+    used: Number,
+    free: Number,
+  },
 });
 
 export default models.Server || model("Server", ServerSchema);
